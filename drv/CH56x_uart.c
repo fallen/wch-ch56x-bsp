@@ -592,6 +592,28 @@ uint16_t UART0_RecvString( puint8_t buf )
 }
 
 /*******************************************************************************
+ * @fn     UART0_Recv
+ *
+ * @brief  Read len bytes from serial port
+ *
+ * @param  buf - storage buffer where to store received bytes
+ * @param  len - total number of bytes to receive
+ *
+ * @return None
+ */
+void UART0_Recv( puint8_t buf, size_t len )
+{
+    while(len)
+    {
+        if(R8_UART0_RFC)
+        {
+            *buf++ = R8_UART0_RBR;
+            len--;
+        }
+    }
+}
+
+/*******************************************************************************
  * @fn     UART1_RecvString
  *
  * @brief  Serial read multibyte
@@ -611,6 +633,28 @@ uint16_t UART1_RecvString( puint8_t buf )
 	}
 
 	return (len);
+}
+
+/*******************************************************************************
+ * @fn     UART1_Recv
+ *
+ * @brief  Read len bytes from serial port
+ *
+ * @param  buf - storage buffer where to store received bytes
+ * @param  len - total number of bytes to receive
+ *
+ * @return None
+ */
+void UART1_Recv( puint8_t buf, size_t len )
+{
+    while(len)
+    {
+        if(R8_UART1_RFC)
+        {
+            *buf++ = R8_UART1_RBR;
+            len--;
+        }
+    }
 }
 
 /*******************************************************************************
@@ -667,6 +711,28 @@ uint16_t UART2_RecvString( puint8_t buf )
 }
 
 /*******************************************************************************
+ * @fn     UART2_Recv
+ *
+ * @brief  Read len bytes from serial port
+ *
+ * @param  buf - storage buffer where to store received bytes
+ * @param  len - total number of bytes to receive
+ *
+ * @return None
+ */
+void UART2_Recv( puint8_t buf, size_t len )
+{
+    while(len)
+    {
+        if(R8_UART2_RFC)
+        {
+            *buf++ = R8_UART2_RBR;
+            len--;
+        }
+    }
+}
+
+/*******************************************************************************
  * @fn     UART2_rx
  *
  * @brief  UART2 receive data
@@ -717,6 +783,28 @@ uint16_t UART3_RecvString( puint8_t buf )
 	}
 
 	return (len);
+}
+
+/*******************************************************************************
+ * @fn     UART3_Recv
+ *
+ * @brief  Read len bytes from serial port
+ *
+ * @param  buf - storage buffer where to store received bytes
+ * @param  len - total number of bytes to receive
+ *
+ * @return None
+ */
+void UART3_Recv( puint8_t buf, size_t len )
+{
+    while(len)
+    {
+        if(R8_UART3_RFC)
+        {
+            *buf++ = R8_UART3_RBR;
+            len--;
+        }
+    }
 }
 
 /*******************************************************************************

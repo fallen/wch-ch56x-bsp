@@ -63,6 +63,7 @@ void UART0_SendString(puint8_t buf, uint16_t l); /* Serial Multibyte send */
 
 #define	UART0_RecvByte() (R8_UART0_RBR) /* Serial Read single byte */
 uint16_t UART0_RecvString(puint8_t buf); /*Serial Read multiple bytes */
+void UART0_Recv(puint8_t buf, size_t len);
 uint16_t UART0_rx(uint8_t* buf, int buf_len_max);
 
 /****************** UART1 */
@@ -86,6 +87,7 @@ void UART1_SendString(puint8_t buf, uint16_t l); /*Serial Multibyte send */
 
 #define	UART1_RecvByte() (R8_UART1_RBR) /* Serial Read single byte */
 uint16_t UART1_RecvString(puint8_t buf); /* Serial Read multiple bytes */
+void UART1_Recv(puint8_t buf, size_t len);
 uint16_t UART1_rx(uint8_t* buf, int buf_len_max);
 
 /****************** UART2 */
@@ -109,6 +111,7 @@ void UART2_SendString(puint8_t buf, uint16_t l); /* Serial Multibyte send */
 
 #define	UART2_RecvByte() (R8_UART2_RBR) /* Serial Read single byte */
 uint16_t UART2_RecvString(puint8_t buf); /* Serial Read multiple bytes */
+void UART2_Recv(puint8_t buf, size_t len);
 uint16_t UART2_rx(uint8_t* buf, int buf_len_max);
 
 /****************** UART3 */
@@ -132,6 +135,7 @@ void UART3_SendString(puint8_t buf, uint16_t l); /*Serial Multibyte send */
 
 #define	UART3_RecvByte() (R8_UART3_RBR) /*Serial Read single byte */
 uint16_t UART3_RecvString(puint8_t buf); /*Serial Read multiple bytes */
+void UART3_Recv(puint8_t buf, size_t len);
 uint16_t UART3_rx(uint8_t* buf, int buf_len_max);
 
 #ifdef __cplusplus
