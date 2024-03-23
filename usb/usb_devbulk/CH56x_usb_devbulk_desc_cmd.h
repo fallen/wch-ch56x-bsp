@@ -39,7 +39,7 @@ typedef enum _usb_type
  *
  * @return  None
  */
-void usb_cmd_rx(e_usb_type usb_type, uint8_t* rx_usb_dma_buff, uint8_t* tx_usb_dma_buff);
+int usb_cmd_rx(e_usb_type usb_type, uint8_t* rx_usb_dma_buff, uint8_t* tx_usb_dma_buff);
 
 typedef union
 {
@@ -118,10 +118,10 @@ extern uint8_t USB_StringVendor[LEN_USB_StringVendor];
 /* StringProduct */
 /*****************/
 /* USB 2.0 HS_String Product */
-#define LEN_USB_HS_StringProduct (20)
+#define LEN_USB_HS_StringProduct (16)
 extern uint8_t USB_HS_StringProduct[LEN_USB_HS_StringProduct];
 /* USB 3.0 SS_String Product */
-#define LEN_USB_SS_StringProduct (20)
+#define LEN_USB_SS_StringProduct (16)
 extern uint8_t USB_SS_StringProduct[LEN_USB_SS_StringProduct];
 
 /* USB 2.0 / 3.0 String Serial */

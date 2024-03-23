@@ -191,7 +191,7 @@ uint8_t USB_SS_ConfigDescriptor[LEN_USB_SS_ConfigDescriptor] =
 	0x04, // INTERFACE (4)
 	0x00, // Zero based index 0f this interface
 	0x00, // Alternate setting value (?)
-	0x04, // Number of endpoints (not counting 0)
+	0x02, // Number of endpoints (not counting 0)
 	0xff, // Interface class, ff is vendor specific
 	0xff, // Interface sub-class
 	0xff, // Interface protocol
@@ -227,7 +227,9 @@ uint8_t USB_SS_ConfigDescriptor[LEN_USB_SS_ConfigDescriptor] =
 	0x00, // no stream
 	0x00,
 	0x00,
+};
 
+#if 0
 	//Endpoint 2 Descriptor
 	0x07, // length of this endpoint descriptor
 	0x05, // ENDPOINT (5)
@@ -258,7 +260,7 @@ uint8_t USB_SS_ConfigDescriptor[LEN_USB_SS_ConfigDescriptor] =
 	0x00, // no stream
 	0x00,
 	0x00
-};
+#endif
 
 /*********************/
 /* String Descriptor */
@@ -293,15 +295,13 @@ uint8_t USB_HS_StringProduct[LEN_USB_HS_StringProduct]=
 {
 	LEN_USB_HS_StringProduct, // length of this descriptor
 	0x03, /* USB Descriptor Type String */
-	'H', 0x00,
-	'y', 0x00,
-	'd', 0x00,
-	'r', 0x00,
-	'a', 0x00,
-	'U', 0x00,
 	'S', 0x00,
-	'B', 0x00,
-	'3', 0x00
+	'u', 0x00,
+	'c', 0x00,
+	'r', 0x00,
+	'\xe9', 0x00, // é in UTF-16
+	'L', 0x00,
+	'A', 0x00
 };
 
 /*  USB 3.0 SuperSpeed String Product USB_DESCR_PRODUCT_STRING */
@@ -309,15 +309,13 @@ uint8_t USB_SS_StringProduct[LEN_USB_SS_StringProduct] =
 {
 	LEN_USB_SS_StringProduct, // length of this descriptor
 	0x03, /* USB Descriptor Type String */
-	'H', 0x00,
-	'y', 0x00,
-	'd', 0x00,
-	'r', 0x00,
-	'a', 0x00,
-	'U', 0x00,
 	'S', 0x00,
-	'B', 0x00,
-	'3', 0x00
+	'u', 0x00,
+	'c', 0x00,
+	'r', 0x00,
+	'\xe9', 0x00, // é in UTF-16
+	'L', 0x00,
+	'A', 0x00
 };
 
 /*  USB 2.0 / 3.0  String Serial USB_DESCR_SERIAL_STRING */

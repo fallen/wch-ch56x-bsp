@@ -36,6 +36,8 @@ __attribute__((aligned(16))) uint8_t endp1Rbuff[DEF_ENDP1_MAX_SIZE] __attribute_
 __attribute__((aligned(16))) uint8_t endp1Tbuff[DEF_ENDP1_MAX_SIZE] __attribute__((section(".DMADATA"))); // Endpoint 1 data Transmit buffer
 __attribute__((aligned(16))) uint8_t endp2RTbuff[DEF_ENDP2_MAX_SIZE] __attribute__((section(".DMADATA"))); // Endpoint 2 data transceiver buffer
 
+volatile int EP1_to_be_sent = 0;
+
 /*******************************************************************************
  * @fn     USB3_force
  *
@@ -90,7 +92,7 @@ void USB30D_init(FunctionalState sta)
 	if(sta)
 	{
 		/* Clear EndPoint1 Transmit DMA Buffer */
-		memset((uint8_t*)endp1Tbuff, 0, 4096);
+		memset((uint8_t*)endp1Tbuff, 0, DEF_ENDP1_MAX_SIZE);
 		// Enable USB
 		s = USB30_device_init();
 		if(s)
@@ -98,7 +100,7 @@ void USB30D_init(FunctionalState sta)
 			// cprintf("USB30_device_init err\n");
 			while(1);
 		}
-		USBSS->UEP_CFG = EP0_R_EN | EP0_T_EN | EP1_R_EN | EP1_T_EN | EP2_R_EN | EP2_T_EN; // set end point rx/tx enable
+		USBSS->UEP_CFG = EP0_R_EN | EP0_T_EN | EP1_R_EN | EP1_T_EN; // set end point rx/tx enable
 
 		USBSS->UEP0_DMA = (uint32_t)(uint8_t *)endp0RTbuff;
 		USBSS->UEP1_TX_DMA = (uint32_t)(uint8_t *)endp1Tbuff;
@@ -107,11 +109,8 @@ void USB30D_init(FunctionalState sta)
 		USBSS->UEP1_RX_DMA = (uint32_t)(uint8_t *)endp1Rbuff;
 		USBSS->UEP2_RX_DMA = (uint32_t)(uint8_t *)endp2RTbuff;
 
-		USB30_OUT_set(ENDP_1, ACK, DEF_ENDP1_OUT_BURST_LEVEL); // endpoint1 receive setting
-		USB30_OUT_set(ENDP_2, ACK, DEF_ENDP2_OUT_BURST_LEVEL); // endpoint2 receive setting
-
-		USB30_IN_set(ENDP_1, ENABLE, ACK, DEF_ENDP1_IN_BURST_LEVEL, 1024); // endpoint1 send setting
-		USB30_IN_set(ENDP_2, ENABLE, ACK, DEF_ENDP2_IN_BURST_LEVEL, 1024); // endpoint2 send setting
+		USB30_OUT_set(ENDP_1, ACK, DEF_ENDP1_OUT_BURST_LEVEL); // we are ready to accept commands via EP1 OUT packets
+		USB30_IN_set(ENDP_1, ENABLE, NRDY, 0, 0); // we are not yet ready to accept EP1 IN packets: no commands treated so far
 	}
 	else
 	{
@@ -541,10 +540,7 @@ __attribute__((interrupt("WCH-Interrupt-fast"))) void LINK_IRQHandler(void)
 		USBSS->LINK_INT_FLAG = HOT_RESET_FLAG; // HOT RESET begin
 		USBSS->UEP0_TX_CTRL = 0;
 		USB30_IN_set(ENDP_1, DISABLE, NRDY, 0, 0);
-		USB30_IN_set(ENDP_2, DISABLE, NRDY, 0, 0);
-
 		USB30_OUT_set(ENDP_1, NRDY, 0);
-		USB30_OUT_set(ENDP_2, NRDY, 0);
 
 		USB30_device_setaddress(0);
 		USBSS->LINK_CTRL &= ~TX_HOT_RESET; // HOT RESET end
@@ -587,24 +583,13 @@ void EP1_IN_Callback(void)
 	bsp_wait_ms_delay(10); // Simulate a Delay to retrieve data before to send
 	cprintf("EP1-%d TX After\n", nump);
 #endif
-	if(nump == 0)
-	{
-		// All sent
-		USBSS->UEP1_TX_DMA = (uint32_t)(uint8_t *)endp1Tbuff; // Burst transfer DMA address offset Need to reset
-		USB30_IN_clearIT(ENDP_1); // Clear endpoint state Keep only packet sequence number
-		USB30_IN_set(ENDP_1, ENABLE, ACK, DEF_ENDP1_IN_BURST_LEVEL, 1024); // Set the endpoint to be able to send 4 packets
-		USB30_send_ERDY(ENDP_1 | IN, DEF_ENDP1_IN_BURST_LEVEL); // Notify the host to send 4 packets
-	}
-	else
-	{
-		if(nump > DEF_ENDP1_IN_BURST_LEVEL)
-			nump = DEF_ENDP1_IN_BURST_LEVEL;
-		// There is still nump packet left to be sent; during the burst process, the host may not be able to take all the data packets at one time.
-		// Therefore, it is necessary to determine the current number of remaining packets and notify the host of how many packets are left to be taken.
-		USB30_IN_clearIT(ENDP_1); // Clear endpoint state Keep only packet sequence number
-		USB30_IN_set(ENDP_1, ENABLE, ACK, nump, 1024); // Able to send nump packet
-		USB30_send_ERDY(ENDP_1 | IN, nump);
-	}
+    // All sent
+    USBSS->UEP1_TX_DMA = (uint32_t)(uint8_t *)endp1Tbuff; // Burst transfer DMA address offset Need to reset
+    USB30_IN_clearIT(ENDP_1); // Clear endpoint state Keep only packet sequence number
+    if (EP1_to_be_sent) { // we've just sent data, now we don't have data anymore
+        USB30_IN_set(ENDP_1, ENABLE, NRDY, 0, 0); // We have no DATA to send
+        EP1_to_be_sent = 0;
+    }
 }
 
 /*******************************************************************************
@@ -721,6 +706,7 @@ void EP1_OUT_Callback(void)
 	uint16_t rx_len;
 	uint8_t  nump;
 	uint8_t  status;
+	int ret;
 
 	USB30_OUT_status(ENDP_1, &nump, &rx_len, &status); // Get the number of received packets rxlen is the packet length of the last packet
 #if DEBUG_USB3_EPX
@@ -732,24 +718,13 @@ void EP1_OUT_Callback(void)
 	        rx_len = 16;
 	    print_hex(endp1Rbuff, rx_len);
 	*/
-	if(nump == 0)
-	{
-		// All received
-		usb_cmd_rx(USB_TYPE_USB3, endp1Rbuff, endp1Tbuff);
-		USB30_OUT_clearIT(ENDP_1); // Clear all state of the endpoint Keep only the packet sequence
-		USBSS->UEP1_RX_DMA = (uint32_t)(uint8_t *)endp1Rbuff; // In burst mode, the address needs to be reset due to automatic address offset.
-		USB30_OUT_set(ENDP_1, ACK, DEF_ENDP1_OUT_BURST_LEVEL); // Able to send DEF_ENDP1_OUT_BURST_LEVEL packets on endpoint 1
-		USB30_send_ERDY(ENDP_1 | OUT, DEF_ENDP1_OUT_BURST_LEVEL); // Notify the host to take DEF_ENDP1_OUT_BURST_LEVEL packets
-	}
-	else
-	{
-		if(nump > DEF_ENDP1_OUT_BURST_LEVEL)
-			nump = DEF_ENDP1_OUT_BURST_LEVEL;
-		// You can also receive nump packet
-		USB30_OUT_clearIT(ENDP_1); // Clear all state of the endpoint Keep only the packet sequence
-		USB30_OUT_set(ENDP_1, ACK, nump); // Able to receive nump packet
-		USB30_send_ERDY(ENDP_1 | OUT, nump); // Notify the host to deliver nump packet
-	}
+
+    // All received
+    ret = usb_cmd_rx(USB_TYPE_USB3, endp1Rbuff, endp1Tbuff);
+    USB30_OUT_clearIT(ENDP_1); // Clear all state of the endpoint Keep only the packet sequence
+    USBSS->UEP1_RX_DMA = (uint32_t)(uint8_t *)endp1Rbuff; // In burst mode, the address needs to be reset due to automatic address offset.
+    if (!ret)
+        USB30_OUT_set(ENDP_1, NRDY, 0); // we received a command, we need to process it now, in the mean time we are not ready for a new EP1 OUT packet.
 }
 
 /*******************************************************************************

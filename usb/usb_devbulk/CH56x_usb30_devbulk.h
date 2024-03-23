@@ -24,7 +24,7 @@ extern "C" {
 /* Global define */
 // DEF_ENDP1_OUT_BURST_LEVEL / DEF_ENDP1_IN_BURST_LEVEL maximum burst size 16 defined by the USB3 specification
 // Warning USB3 enpoint bulk with 8 or 16 burst can be problematic on some PC
-#define DEF_ENDP1_OUT_BURST_LEVEL 4
+#define DEF_ENDP1_OUT_BURST_LEVEL 1
 #define DEF_ENDP1_IN_BURST_LEVEL (DEF_ENDP1_OUT_BURST_LEVEL)
 #define DEF_ENDP1_MAX_SIZE (DEF_ENDP1_OUT_BURST_LEVEL * 1024)
 
