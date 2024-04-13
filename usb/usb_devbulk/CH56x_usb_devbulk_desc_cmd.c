@@ -133,7 +133,7 @@ uint8_t USB_HS_ConfigDescriptor[LEN_USB_HS_ConfigDescriptor] =
 	0x04,   // INTERFACE (4)
 	0x00,   // Zero based index 0f this interface
 	0x00,   // Alternate setting value (?)
-	0x04,   // Number of endpoints (not counting 0)
+	0x03,   // Number of endpoints (not counting 0)
 	0xff,   // Interface class, ff is vendor specific
 	0xff,   // Interface sub-class
 	0xff,   // Interface protocol
@@ -164,14 +164,6 @@ uint8_t USB_HS_ConfigDescriptor[LEN_USB_HS_ConfigDescriptor] =
 	0x00,   // max packet size - 512 bytes
 	0x02,   // max packet size - high
 	0x00,   // polling interval in milliseconds (1 for iso)
-
-	0x07,   // length of this endpoint descriptor
-	0x05,   // ENDPOINT (5)
-	0x02,   // endpoint direction (80 is in) and address
-	0x02,   // transfer type - 00 = control, 01 = iso, 10 = bulk, 11 = int
-	0x00,   // max packet size - 512 bytes
-	0x02,   // max packet size - high
-	0x00    // polling interval in milliseconds (1 for iso)
 };
 
 /* USB3.0 SuperSpeed configuration descriptor */
@@ -191,7 +183,7 @@ uint8_t USB_SS_ConfigDescriptor[LEN_USB_SS_ConfigDescriptor] =
 	0x04, // INTERFACE (4)
 	0x00, // Zero based index 0f this interface
 	0x00, // Alternate setting value (?)
-	0x02, // Number of endpoints (not counting 0)
+	0x03, // Number of endpoints (not counting 0)
 	0xff, // Interface class, ff is vendor specific
 	0xff, // Interface sub-class
 	0xff, // Interface protocol
@@ -227,9 +219,6 @@ uint8_t USB_SS_ConfigDescriptor[LEN_USB_SS_ConfigDescriptor] =
 	0x00, // no stream
 	0x00,
 	0x00,
-};
-
-#if 0
 	//Endpoint 2 Descriptor
 	0x07, // length of this endpoint descriptor
 	0x05, // ENDPOINT (5)
@@ -245,22 +234,7 @@ uint8_t USB_SS_ConfigDescriptor[LEN_USB_SS_ConfigDescriptor] =
 	0x00, // no stream
 	0x00,
 	0x00,
-	//endp2_descriptor
-	0x07, // length of this endpoint descriptor
-	0x05, // ENDPOINT (5)
-	0x02, // endpoint direction (00 is out) and address
-	0x02, // transfer type - 00 = control, 01 = iso, 10 = bulk, 11 = int
-	0x00, // max packet size - 1024 bytes
-	0x04, // max packet size - high
-	0x00, // polling interval in milliseconds (1 for iso)
-	//endp2_compansion_desc
-	0x06, // length of this endpoint compansion descriptor
-	0x30,
-	DEF_ENDP2_OUT_BURST_LEVEL - 1, // max burst size
-	0x00, // no stream
-	0x00,
-	0x00
-#endif
+};
 
 /*********************/
 /* String Descriptor */

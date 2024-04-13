@@ -15,9 +15,8 @@
 #include "CH56x_usb_devbulk_desc_cmd.h"
 
 #include "CH56x_debug_log.h"
-//#define DEBUG_USB2_REQ 1 // Debug USB Req (can have impact real-time to correctly enumerate USB2)
-//#define DEBUG_USB2_EP0 1 // Debug ON EP0 have timing issue with real-time to enumerate USB2
-//#define DEBUG_USB2_EPX 1 // EPX is EP1 to EP7
+
+#include "config.h"
 
 /*
  * This routine is a USB 2.0 device usage routine
@@ -86,8 +85,8 @@ void USB20_Endp_Init(void)
 	R32_UEP1_TX_DMA = (uint32_t)(uint8_t *)endp1Tbuff;
 	R32_UEP1_RX_DMA = (uint32_t)(uint8_t *)endp1Rbuff;
 
-	R32_UEP2_TX_DMA = (uint32_t)(uint8_t *)endp2RTbuff;
-	R32_UEP2_RX_DMA = (uint32_t)(uint8_t *)endp2RTbuff;
+	R32_UEP2_RX_DMA = (uint32_t)(uint8_t *)HSPI_RX_Addr0; // Burst transfer DMA address offset Need to reset
+;
 
 	R16_UEP0_T_LEN = 0;
 	R8_UEP0_TX_CTRL = 0;
@@ -98,7 +97,7 @@ void USB20_Endp_Init(void)
 	R8_UEP1_RX_CTRL = UEP_R_RES_ACK | RB_UEP_R_TOG_0;
 
 	R16_UEP2_T_LEN = U20_MAXPACKET_LEN;
-	R8_UEP2_TX_CTRL = UEP_T_RES_ACK | RB_UEP_T_TOG_0;
+	R8_UEP2_TX_CTRL = UEP_T_RES_NAK;
 	R8_UEP2_RX_CTRL = UEP_R_RES_ACK | RB_UEP_R_TOG_0;
 
 	R16_UEP3_T_LEN = 0;
@@ -106,7 +105,7 @@ void USB20_Endp_Init(void)
 	R8_UEP3_RX_CTRL = UEP_R_RES_NAK;
 
 	R16_UEP4_T_LEN = 0;
-	R8_UEP4_TX_CTRL = UEP_T_RES_NAK ;
+	R8_UEP4_TX_CTRL = UEP_T_RES_NAK;
 	R8_UEP4_RX_CTRL = UEP_R_RES_NAK;
 
 	R16_UEP5_T_LEN = 0;
@@ -695,7 +694,7 @@ __attribute__((interrupt("WCH-Interrupt-fast"))) void USBHS_IRQHandler(void)
 				if(rx_token == PID_IN)
 				{
 					// Flip the synchronization trigger bit to be sent next time bulk transfer data0 data1 flip back and forth
-					R32_UEP2_TX_DMA = (uint32_t)(uint8_t *)endp2RTbuff;
+					R32_UEP2_TX_DMA = (uint32_t)(uint8_t *)RB_HSPI_RX_TOG ? (unsigned long int)HSPI_RX_Addr1 : (unsigned long int)HSPI_RX_Addr0;
 					R8_UEP2_TX_CTRL ^= RB_UEP_T_TOG_1;
 
 					// The endpoint status is set to ACK, if the transmission length remains unchanged,
@@ -704,9 +703,7 @@ __attribute__((interrupt("WCH-Interrupt-fast"))) void USBHS_IRQHandler(void)
 				}
 				else if(rx_token == PID_OUT)
 				{
-					R32_UEP2_RX_DMA = (uint32_t)(uint8_t *)endp2RTbuff;
-					R8_UEP2_RX_CTRL ^= RB_UEP_R_TOG_1;
-					R8_UEP2_RX_CTRL = (R8_UEP2_RX_CTRL &~RB_UEP_RRES_MASK)|UEP_R_RES_ACK;
+                    // This should never happen
 				}
 				break;
 			default:

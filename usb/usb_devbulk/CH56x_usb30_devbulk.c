@@ -16,9 +16,7 @@
 #include "CH56x_usb30_devbulk_LIB.h"
 #include "CH56x_usb_devbulk_desc_cmd.h"
 
-//#define DEBUG_USB3_REQ 1 // Debug USB Req (have impact on real-time to correctly enumerate USB 3.0..)
-//#define DEBUG_USB3_EP0 1 // Debug EP0 (have impact on real-time to correctly enumerate USB 3.0..)
-//#define DEBUG_USB3_EPX 1 // Debug EP1 to EP7
+#include "config.h"
 
 /* Global define */
 /* Global Variable */
@@ -34,7 +32,6 @@ vuint8_t g_DeviceUsbType = 0;
 __attribute__((aligned(16))) uint8_t endp0RTbuff[512] __attribute__((section(".DMADATA"))); // Endpoint 0 data transceiver buffer
 __attribute__((aligned(16))) uint8_t endp1Rbuff[DEF_ENDP1_MAX_SIZE] __attribute__((section(".DMADATA"))); // Endpoint 1 data Receive buffer
 __attribute__((aligned(16))) uint8_t endp1Tbuff[DEF_ENDP1_MAX_SIZE] __attribute__((section(".DMADATA"))); // Endpoint 1 data Transmit buffer
-__attribute__((aligned(16))) uint8_t endp2RTbuff[DEF_ENDP2_MAX_SIZE] __attribute__((section(".DMADATA"))); // Endpoint 2 data transceiver buffer
 
 volatile int EP1_to_be_sent = 0;
 
@@ -93,6 +90,8 @@ void USB30D_init(FunctionalState sta)
 	{
 		/* Clear EndPoint1 Transmit DMA Buffer */
 		memset((uint8_t*)endp1Tbuff, 0, DEF_ENDP1_MAX_SIZE);
+		memset((uint8_t*)HSPI_RX_Addr0, 0, DEF_ENDP2_MAX_SIZE);
+		memset((uint8_t*)HSPI_RX_Addr1, 0, DEF_ENDP2_MAX_SIZE);
 		// Enable USB
 		s = USB30_device_init();
 		if(s)
@@ -100,17 +99,16 @@ void USB30D_init(FunctionalState sta)
 			// cprintf("USB30_device_init err\n");
 			while(1);
 		}
-		USBSS->UEP_CFG = EP0_R_EN | EP0_T_EN | EP1_R_EN | EP1_T_EN; // set end point rx/tx enable
+		USBSS->UEP_CFG = EP0_R_EN | EP0_T_EN | EP1_R_EN | EP1_T_EN | EP2_T_EN; // set end point rx/tx enable
 
 		USBSS->UEP0_DMA = (uint32_t)(uint8_t *)endp0RTbuff;
 		USBSS->UEP1_TX_DMA = (uint32_t)(uint8_t *)endp1Tbuff;
-		USBSS->UEP2_TX_DMA = (uint32_t)(uint8_t *)endp2RTbuff;
-
+		USBSS->UEP2_TX_DMA = (uint32_t)(uint8_t *)HSPI_RX_Addr0;
 		USBSS->UEP1_RX_DMA = (uint32_t)(uint8_t *)endp1Rbuff;
-		USBSS->UEP2_RX_DMA = (uint32_t)(uint8_t *)endp2RTbuff;
 
 		USB30_OUT_set(ENDP_1, ACK, DEF_ENDP1_OUT_BURST_LEVEL); // we are ready to accept commands via EP1 OUT packets
 		USB30_IN_set(ENDP_1, ENABLE, NRDY, 0, 0); // we are not yet ready to accept EP1 IN packets: no commands treated so far
+		USB30_IN_set(ENDP_2, ENABLE, NRDY, 0, 0); // we are not yeat ready to accept EP2 IN packets: no sample data yet
 	}
 	else
 	{
@@ -609,10 +607,9 @@ void EP2_IN_Callback(void)
 	if(nump == 0)
 	{
 		// All sent
-		USBSS->UEP2_TX_DMA = (uint32_t)(uint8_t *)endp2RTbuff; // Burst transfer DMA address offset Need to reset
+		USBSS->UEP2_TX_DMA = RB_HSPI_RX_TOG ? (unsigned long int)HSPI_RX_Addr1 : (unsigned long int)HSPI_RX_Addr0; // Burst transfer DMA address offset Need to reset
 		USB30_IN_clearIT(ENDP_2); // Clear endpoint state Keep only packet sequence number
-		USB30_IN_set(ENDP_2, ENABLE, ACK, DEF_ENDP2_IN_BURST_LEVEL, 1024); // Set the endpoint to be able to receive DEF_ENDP2_IN_BURST_LEVEL packets
-		USB30_send_ERDY(ENDP_2 | IN, DEF_ENDP2_IN_BURST_LEVEL); // Notify the host to send DEF_ENDP2_IN_BURST_LEVEL packets
+		USB30_IN_set(ENDP_2, ENABLE, NRDY, DEF_ENDP2_IN_BURST_LEVEL, 0);
 	}
 	else
 	{
@@ -736,35 +733,6 @@ void EP1_OUT_Callback(void)
  */
 void EP2_OUT_Callback(void)
 {
-	uint16_t rx_len;
-	uint8_t  nump;
-	uint8_t  status;
-	USB30_OUT_status(ENDP_2, &nump, &rx_len, &status); // Get the number of received packets rxlen is the packet length of the last packet
-#if DEBUG_USB3_EPX
-	cprintf("USB3 EP2 OUT nump=%d rx_len=%d status=%d\n", nump, rx_len, status);
-#endif
-	/*
-	    cprintf("EP2-%d rx_len=%d\n", nump, rx_len);
-	    if(rx_len > 16)
-	        rx_len = 16;
-	    print_hex(endp2RTbuff, rx_len);
-	*/
-	if(nump == 0)
-	{
-		// All data received
-		USB30_OUT_clearIT(ENDP_2);                                // Clear all state of the endpoint Keep only the packet sequence
-		USBSS->UEP2_RX_DMA = (uint32_t)(uint8_t *)endp2RTbuff;    // In burst mode, the address needs to be reset due to automatic address offset.
-		USB30_OUT_set(ENDP_2, ACK, DEF_ENDP2_OUT_BURST_LEVEL);    // Set the endpoint to be able to receive DEF_ENDP2_OUT_BURST_LEVEL packets
-		USB30_send_ERDY(ENDP_2 | OUT, DEF_ENDP2_OUT_BURST_LEVEL); // Notify the host to deliver DEF_ENDP2_OUT_BURST_LEVEL packets
-	}
-	else
-	{
-		if(nump > DEF_ENDP2_OUT_BURST_LEVEL)
-			nump = DEF_ENDP2_OUT_BURST_LEVEL;
-		USB30_OUT_clearIT(ENDP_2); // Clear all state of the endpoint Keep only the packet sequence
-		USB30_OUT_set(ENDP_2, ACK, nump);    // Also able to receive nump packet
-		USB30_send_ERDY(ENDP_2 | OUT, nump); // Notify the host to deliver nump packet
-	}
 }
 /*******************************************************************************
  * @fn     EP3_OUT_Callback

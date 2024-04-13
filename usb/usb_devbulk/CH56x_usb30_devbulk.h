@@ -30,11 +30,8 @@ extern "C" {
 
 // DEF_ENDP2_OUT_BURST_LEVEL / DEF_ENDP2_IN_BURST_LEVEL maximum burst size 16 defined by the USB3 specification
 // Warning USB3 enpoint bulk with 8 or 16 burst can be problematic on some PC so default is set to 4
-//#define DEF_ENDP2_OUT_BURST_LEVEL 16
-//#define DEF_ENDP2_OUT_BURST_LEVEL 8
-#define DEF_ENDP2_OUT_BURST_LEVEL 4
-#define DEF_ENDP2_IN_BURST_LEVEL (DEF_ENDP2_OUT_BURST_LEVEL)
-#define DEF_ENDP2_MAX_SIZE (DEF_ENDP2_OUT_BURST_LEVEL * 1024)
+#define DEF_ENDP2_IN_BURST_LEVEL 4
+#define DEF_ENDP2_MAX_SIZE (DEF_ENDP2_IN_BURST_LEVEL * 1024)
 
 /* Global Variable */
 extern __attribute__ ((aligned(16))) uint8_t endp0RTbuff[512] __attribute__((section(".DMADATA"))); // Endpoint0 Data send/receive buffer
