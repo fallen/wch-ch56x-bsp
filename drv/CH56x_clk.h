@@ -18,6 +18,8 @@ extern "C" {
 
 enum
 {
+	CLK_SOURCE_PLL_3_5MHz = 3,
+	CLK_SOURCE_PLL_7MHz = 7,
 	CLK_SOURCE_PLL_15MHz = 15, // Power-on default
 	CLK_SOURCE_PLL_30MHz = 30,
 	CLK_SOURCE_PLL_60MHz = 60,
