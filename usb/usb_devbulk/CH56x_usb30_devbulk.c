@@ -17,6 +17,12 @@
 #include "CH56x_usb_devbulk_desc_cmd.h"
 
 #include "config.h"
+#ifndef __ANALYSIS__
+#define WCH_INTERRUPT __attribute__((interrupt("WCH-Interrupt-fast")))
+#else
+#define WCH_INTERRUPT
+#endif
+
 
 /* Global define */
 /* Global Variable */
@@ -34,6 +40,7 @@ __attribute__((aligned(16))) uint8_t endp1Rbuff[DEF_ENDP1_MAX_SIZE] __attribute_
 __attribute__((aligned(16))) uint8_t endp1Tbuff[DEF_ENDP1_MAX_SIZE] __attribute__((section(".DMADATA"))); // Endpoint 1 data Transmit buffer
 
 volatile int EP1_to_be_sent = 0;
+extern volatile unsigned int hspi_data_ready;
 
 /*******************************************************************************
  * @fn     USB3_force
@@ -409,7 +416,7 @@ void USB30_Setup_Status(void)
  *
  * @return None
  */
-__attribute__((interrupt("WCH-Interrupt-fast"))) void TMR0_IRQHandler(void)
+WCH_INTERRUPT void TMR0_IRQHandler(void)
 {
 	R8_TMR0_INT_FLAG = RB_TMR_IF_CYC_END;
 	if(link_sta == 1)
@@ -445,7 +452,7 @@ __attribute__((interrupt("WCH-Interrupt-fast"))) void TMR0_IRQHandler(void)
  *
  * @return None
  */
-__attribute__((interrupt("WCH-Interrupt-fast"))) void LINK_IRQHandler(void)
+WCH_INTERRUPT void LINK_IRQHandler(void)
 {
 	if(USBSS->LINK_INT_FLAG & LINK_Ux_EXIT_FLAG) // device enter U2
 	{
@@ -600,16 +607,30 @@ void EP1_IN_Callback(void)
 void EP2_IN_Callback(void)
 {
 	uint8_t nump;
+//	UART1_SendString("I\n\r", 3);
 	nump = USB30_IN_nump(ENDP_2); //nump: number of remaining packets to be sent
-#if DEBUG_USB3_EPX
+#if 0
 	cprintf("USB3 EP2 IN: nump=%d\n", nump);
 #endif
 	if(nump == 0)
 	{
 		// All sent
-		USBSS->UEP2_TX_DMA = RB_HSPI_RX_TOG ? (unsigned long int)HSPI_RX_Addr1 : (unsigned long int)HSPI_RX_Addr0; // Burst transfer DMA address offset Need to reset
-		USB30_IN_clearIT(ENDP_2); // Clear endpoint state Keep only packet sequence number
-		USB30_IN_set(ENDP_2, ENABLE, NRDY, DEF_ENDP2_IN_BURST_LEVEL, 0);
+		USBSS->UEP2_TX_DMA =
+			(R8_HSPI_RX_SC & RB_HSPI_RX_TOG) ?
+				(unsigned long int)HSPI_RX_Addr1 :
+				(unsigned long int)
+					HSPI_RX_Addr0; // Burst transfer DMA address offset Need to reset
+		USB30_IN_clearIT(
+			ENDP_2); // Clear endpoint state Keep only packet sequence number
+		bsp_disable_interrupt();
+		if (--hspi_data_ready == 0)
+			USB30_IN_set(ENDP_2, ENABLE, NRDY, 0, 0);
+		else {
+			USB30_IN_set(ENDP_2, ENABLE, ACK,
+				     DEF_ENDP2_IN_BURST_LEVEL, 1024);
+			USB30_send_ERDY(ENDP_2 | IN, DEF_ENDP2_IN_BURST_LEVEL);
+		}
+		bsp_enable_interrupt();
 	}
 	else
 	{
@@ -821,7 +842,7 @@ void USB30_ITP_Callback(uint32_t ITPCounter)
  *
  * @return None
  */
-__attribute__((interrupt("WCH-Interrupt-fast"))) void USBSS_IRQHandler(void)
+WCH_INTERRUPT void USBSS_IRQHandler(void)
 {
 	static uint32_t count = 0;
 

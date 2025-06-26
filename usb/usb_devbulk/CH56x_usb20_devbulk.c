@@ -18,6 +18,12 @@
 
 #include "config.h"
 
+#ifndef __ANALYSIS__
+#define WCH_INTERRUPT __attribute__((interrupt("WCH-Interrupt-fast")))
+#else
+#define WCH_INTERRUPT
+#endif
+
 /*
  * This routine is a USB 2.0 device usage routine
  * After the host downloads through endpoint 1, it can upload a package through endpoint 1
@@ -542,7 +548,7 @@ uint16_t U20_Standard_Request()
  *
  * @return   None
  */
-__attribute__((interrupt("WCH-Interrupt-fast"))) void USBHS_IRQHandler(void)
+WCH_INTERRUPT void USBHS_IRQHandler(void)
 {
 	uint32_t end_num;
 	uint32_t rx_token;
