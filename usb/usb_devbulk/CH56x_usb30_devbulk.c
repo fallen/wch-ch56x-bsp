@@ -23,6 +23,9 @@
 #define WCH_INTERRUPT
 #endif
 
+#define RISCV_FENCE(p, s) \
+	__asm__ __volatile__("fence " #p "," #s : : : "memory")
+#define mb() RISCV_FENCE(iorw, iorw)
 
 /* Global define */
 /* Global Variable */
@@ -598,7 +601,9 @@ void EP1_IN_Callback(void)
     }
 }
 
-/*******************************************************************************
+extern volatile unsigned int EP2_IN_cnt;
+
+	/*******************************************************************************
  * @fn     EP2_IN_Callback
  *
  * @brief  USB3.0 endpoint2 in callback called from USBSS_IRQHandler (Send data to Host).
@@ -611,6 +616,7 @@ void EP1_IN_Callback(void)
 	uint8_t nump;
 //	UART1_SendString("I\n\r", 3);
 	nump = USB30_IN_nump(ENDP_2); //nump: number of remaining packets to be sent
+	EP2_IN_cnt++;
 #if 0
 	cprintf("USB3 EP2 IN: nump=%d\n", nump);
 #endif
@@ -632,6 +638,7 @@ void EP1_IN_Callback(void)
 				     DEF_ENDP2_IN_BURST_LEVEL, 1024);
 			USB30_send_ERDY(ENDP_2 | IN, DEF_ENDP2_IN_BURST_LEVEL);
 		}
+		mb();
 		bsp_enable_interrupt();
 	}
 	else
