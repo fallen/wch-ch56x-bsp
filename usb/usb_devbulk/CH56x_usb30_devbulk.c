@@ -42,14 +42,15 @@ __attribute__((aligned(16))) uint8_t endp1Tbuff[DEF_ENDP1_MAX_SIZE] __attribute_
 volatile int EP1_to_be_sent = 0;
 extern volatile unsigned int hspi_data_ready;
 
-/*******************************************************************************
+	/*******************************************************************************
  * @fn     USB3_force
  *
  * @brief  Switch to USB3 or do a fallback to USB2 if not available
  *
  * @return None
  */
-void USB3_force(void)
+	void
+	USB3_force(void)
 {
 	USB20_Device_Init(DISABLE);
 
@@ -604,7 +605,8 @@ void EP1_IN_Callback(void)
  *
  * @return None
  */
-void EP2_IN_Callback(void)
+	void
+	EP2_IN_Callback(void)
 {
 	uint8_t nump;
 //	UART1_SendString("I\n\r", 3);
