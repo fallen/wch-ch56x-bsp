@@ -140,7 +140,7 @@ void WWDG_ClearFlag( void )
 }
 
 
-#if( defined  DEBUG)
+#if( defined  DEBUG_UART)
 /*******************************************************************************
  * @fn     _write
  *
@@ -152,24 +152,27 @@ void WWDG_ClearFlag( void )
  * @return   size - Data length
  **/
 __attribute__((used))
-int _write(int fd, char *buf, int size)
+int _write(__attribute__((__unused__)) int fd, char *buf, int size)
 {
 	int i;
 
 	for(i=0; i<size; i++)
 	{
-#if  DEBUG == Debug_UART0
+#if  DEBUG_UART == Debug_UART0
 		while( R8_UART0_TFC == UART_FIFO_SIZE );
 		R8_UART0_THR = *buf++;
-#elif DEBUG == Debug_UART1
+#elif DEBUG_UART == Debug_UART1
 		while( R8_UART1_TFC == UART_FIFO_SIZE );
 		R8_UART1_THR = *buf++;
-#elif DEBUG == Debug_UART2
+#elif DEBUG_UART == Debug_UART2
 		while( R8_UART2_TFC == UART_FIFO_SIZE );
 		R8_UART2_THR = *buf++;
-#elif DEBUG == Debug_UART3
+#elif DEBUG_UART == Debug_UART3
 		while( R8_UART3_TFC == UART_FIFO_SIZE );
 		R8_UART3_THR = *buf++;
+#elif DEBUG_UART == Debug_LITEX_UART
+		litex_uart_tx(buf, size);
+		return size;
 #endif
 	}
 	return size;

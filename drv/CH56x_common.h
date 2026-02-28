@@ -40,6 +40,7 @@ extern "C" {
 #define Debug_UART1 1
 #define Debug_UART2 2
 #define Debug_UART3 3
+#define Debug_LITEX_UART 4
 
 /* SystemCoreClock */
 #ifndef	 FREQ_SYS
