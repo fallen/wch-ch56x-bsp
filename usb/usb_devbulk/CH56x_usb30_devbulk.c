@@ -582,8 +582,8 @@ WCH_INTERRUPT void LINK_IRQHandler(void)
  */
 void EP1_IN_Callback(void)
 {
-	int nump;
-	nump = USB30_IN_nump(ENDP_1); //nump: number of remaining packets to be sent
+	//int nump;
+	//nump = USB30_IN_nump(ENDP_1); //nump: number of remaining packets to be sent
 #if DEBUG_USB3_EPX
 	cprintf("USB3 EP1 IN: nump=%d\n", nump);
 #endif
@@ -837,7 +837,7 @@ void EP7_OUT_Callback(void)
  *
  * @return None
  */
-void USB30_ITP_Callback(uint32_t ITPCounter)
+void USB30_ITP_Callback(__attribute__((__unused__)) uint32_t ITPCounter)
 {
 #if DEBUG_USB3_EPX
 	cprintf("USB30_ITP_Callback\n");

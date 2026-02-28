@@ -237,7 +237,7 @@ uint8_t FLASH_ROMA_WRITE( uint32_t StartAddr, void* Buffer, uint32_t Length )
 		FLASH_ROMA_WriteAddr(rom_addr);
 
 		// write word per word
-		for (int i = 0; i < (Length >> 2); i ++)
+		for (unsigned int i = 0; i < (Length >> 2); i ++)
 		{
 			R32_SPI_ROM_DATA = ((puint32_t)Buffer)[i];
 			uint8_t cr_value = R8_SPI_ROM_CR | 0x10;

@@ -8,6 +8,7 @@
 * SPDX-License-Identifier: Apache-2.0
 *******************************************************************************/
 #include <stdarg.h>
+#include <inttypes.h>
 #include "CH56x_common.h"
 #include "CH56x_debug_log.h"
 
@@ -166,7 +167,7 @@ void log_printf(const char *fmt, ...)
 #ifdef CH56x_DEBUG_LOG_BASIC_TIMESTAMP
 	print_size1 = sprintf(log_printf_buff, "0x%08X ", (uint32_t)(delta));
 #else
-	print_size1 = sprintf(log_printf_buff, "%02us %03ums %03uus ", sec, msec, usec);
+	print_size1 = sprintf(log_printf_buff, "%"PRIu32"s %"PRIu32"ums %"PRIu32"us ", sec, msec, usec);
 #endif
 
 	va_start(va_args, fmt);

@@ -365,4 +365,4 @@ void bsp_uled_off(void);
 }
 #endif
 
-#endif  // __CH56x_BSP_H__	
+#endif  // __CH56x_BSP_H__
